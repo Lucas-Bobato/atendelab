@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3307
--- Tempo de geração: 11/06/2026 às 15:43
+-- Tempo de geração: 19/06/2026 às 14:14
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -113,9 +113,10 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nome`, `email`, `senha`, `perfil`, `status`, `criado_em`) VALUES
-(1, 'Administrador', 'admin@atendelab.com', '$2y$10$J9P2kU2BAMZ3TZcuxTsW4e1D/lka8EocYHzvyoOZmCNcWDQz3RuVC', 'admin', 'ativo', '2026-06-02 00:58:59'),
+(1, 'Admin', 'admin@atendelab.com', '$2y$10$GEreDj66.rcxa3Jr.e1qKuMS89bIux8/QQmvMACaXtB0CGnEV66wq', 'admin', 'ativo', '2026-06-02 00:58:59'),
 (2, 'João Teste Atualizado', 'joao.atualizado@atendelab.com', '$2y$10$6dIrB8CGQZEVaG9fq/R.y..9ZLyZ1J.E31FxkBPmcMfLI4OIzDRdO', 'atendente', 'ativo', '2026-06-11 11:51:35'),
-(4, 'Maria Silva Souza', 'maria.att@email.com', '$2y$10$2D0Ng1kG81jD.koTRuEmluo6ZN1DSHe5Lu4vPMDzxoLfqS9Ps8l2y', 'aluno', 'ativo', '2026-06-11 12:12:03');
+(4, 'Maria Silva Souza', 'maria.att@email.com', '$2y$10$2D0Ng1kG81jD.koTRuEmluo6ZN1DSHe5Lu4vPMDzxoLfqS9Ps8l2y', 'aluno', 'ativo', '2026-06-11 12:12:03'),
+(7, 'ADM', 'adm@adm.com', '$2y$10$CRNO7eiNmBI07TvUdDpAL.LtXs48eEUIYZhnHdiSJneNwyGNGWsty', 'admin', 'ativo', '2026-06-18 22:30:58');
 
 --
 -- Índices para tabelas despejadas
@@ -176,7 +177,7 @@ ALTER TABLE `tipos_atendimentos`
 -- AUTO_INCREMENT de tabela `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Restrições para tabelas despejadas
