@@ -1,38 +1,39 @@
 <?php
-// Controller de entidade de usuários.
-// Em uma arquitetura MVC, ele recebe a requisição, valida dados e acessa o banco.
+
+// Importa a conexão com o banco de dados.
+require_once __DIR__ . '/../../config/database.php';
+
 class UsuariosController
 {
-  // Conexão PDO reutilizada em todos os métodos.
+  // Armazena a conexão PDO.
   private PDO $pdo;
 
   public function __construct()
   {
-    // Importa o arquivo que inicializa o objeto $pdo;
-    require __DIR__ . '/../../config/database.php';
+    // Recupera a conexão criada em database.php.
+    global $pdo;
+
+    // Disponibiliza a conexão para os métodos da classe.
     $this->pdo = $pdo;
   }
 
   public function listar(): void
   {
-    // Define sáida em JSON para APIs/consumo por front-end.
     header('Content-Type: application/json; charset=utf-8');
 
-    // Consulta todos os usuários com ordenação decrescente por ID.
+    // Retorna todos os usuários ordenados do mais recente para o mais antigo.
+    // A coluna senha é omitida intencionalmente — nunca trafegar hash pela API.
     $sql = 'SELECT id, nome, email, perfil, status, criado_em FROM usuarios ORDER BY id DESC';
 
     $stmt = $this->pdo->query($sql);
-    $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // JSON_PRETTY_PRINT melhora leitura em desenvolvimento.
-    echo json_encode($usuarios, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
   }
 
   public function buscarPorId(): void
   {
     header('Content-Type: application/json; charset=utf-8');
 
-    // Lê e valida o ID recebido por GET.
+    // Valida o ID recebido via GET antes de consultar o banco.
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
     if (!$id) {
@@ -43,7 +44,6 @@ class UsuariosController
 
     // Consulta parametrizada evita SQL Injection.
     $sql = 'SELECT id, nome, email, perfil, status, criado_em FROM usuarios WHERE id = :id';
-
     $stmt = $this->pdo->prepare($sql);
     $stmt->bindValue(':id', $id, PDO::PARAM_INT);
     $stmt->execute();
@@ -58,63 +58,63 @@ class UsuariosController
 
     echo json_encode($usuario, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
   }
-  
+
   public function criar(): void
   {
     header('Content-Type: application/json; charset=utf-8');
 
-    // Coleta dados do formulário (POST)
+    // Coleta e sanitiza os dados enviados pelo formulário.
     $nome = trim($_POST['nome'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
     $perfil = $_POST['perfil'] ?? 'atendente';
     $status = $_POST['status'] ?? 'ativo';
 
-    // Regras mínimas de validação de entrada.
+    // Verifica se os campos obrigatórios foram preenchidos.
     if ($nome === '' || $email === '' || $senha === '') {
       http_response_code(400);
-      echo json_encode(['erro' => 'Nome, email e senha são obrigatórios.']);
+      echo json_encode(['erro' => 'Nome, e-mail e senha são obrigatórios.']);
       return;
     }
 
+    // Verifica se o e-mail possui formato válido.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
       http_response_code(400);
-      echo json_encode(['erro' => 'Email inválido.']);
+      echo json_encode(['erro' => 'E-mail inválido.']);
       return;
     }
 
-    // Whitelist de valores válidos para campos de domínio.
-    if (!in_array($perfil, ['admin','atendente','aluno'],true)) {
+    // Whitelist de valores válidos para o campo perfil.
+    if (!in_array($perfil, ['admin', 'atendente', 'aluno'], true)) {
       http_response_code(400);
-      echo json_encode(['erro' => 'Perfil inválido.']);
+      echo json_encode(['erro' => 'Perfil inválido. Use: admin, atendente ou aluno.']);
       return;
     }
 
-    if (!in_array($status, ['ativo','inativo'],true)) {
+    // Whitelist de valores válidos para o campo status.
+    if (!in_array($status, ['ativo', 'inativo'], true)) {
       http_response_code(400);
-      echo json_encode(['erro' => 'Status inválido.']);
+      echo json_encode(['erro' => 'Status inválido. Use: ativo ou inativo.']);
       return;
     }
 
-    // Nunca armazenar senhas em texto puro.
+    // Nunca armazenar senhas em texto puro — o hash protege mesmo em caso de vazamento do banco.
     $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
 
     try {
       $sql = 'INSERT INTO usuarios (nome, email, senha, perfil, status) VALUES (:nome, :email, :senha, :perfil, :status)';
-
       $stmt = $this->pdo->prepare($sql);
       $stmt->bindValue(':nome', $nome);
       $stmt->bindValue(':email', $email);
       $stmt->bindValue(':senha', $senhaHash);
       $stmt->bindValue(':perfil', $perfil);
       $stmt->bindValue(':status', $status);
-
       $stmt->execute();
 
       http_response_code(201);
-      echo json_encode(['sucesso' => 'Usuário criado com sucesso.', 'id' => $this->pdo->lastInsertId()]);
+      echo json_encode(['sucesso' => 'Usuário criado com sucesso.', 'id' => $this->pdo->lastInsertId()], JSON_UNESCAPED_UNICODE);
     } catch (PDOException $e) {
-      // Em produção, registre $e em log em vez de expor detalhes.
+      // Em produção, registre $e em log em vez de expor detalhes ao cliente.
       http_response_code(500);
       echo json_encode(['erro' => 'Erro ao cadastrar usuário.']);
     }
@@ -124,41 +124,44 @@ class UsuariosController
   {
     header('Content-Type: application/json; charset=utf-8');
 
-    // ID vem no POST para operação de update.
+    // ID vem no corpo do POST para operação de atualização.
     $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
     $nome = trim($_POST['nome'] ?? '');
     $email = trim($_POST['email'] ?? '');
-    $senha = $_POST['senha'] ?? '';
     $perfil = $_POST['perfil'] ?? 'atendente';
     $status = $_POST['status'] ?? 'ativo';
 
+    // Verifica se os campos obrigatórios foram preenchidos.
     if (!$id || $nome === '' || $email === '') {
       http_response_code(400);
-      echo json_encode(['erro' => 'ID, nome e email são obrigatórios.']);
+      echo json_encode(['erro' => 'ID, nome e e-mail são obrigatórios.']);
       return;
     }
 
+    // Verifica se o e-mail possui formato válido.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
       http_response_code(400);
-      echo json_encode(['erro' => 'Email inválido.']);
+      echo json_encode(['erro' => 'E-mail inválido.']);
       return;
     }
 
-    if (!in_array($perfil, ['admin','atendente','aluno'],true)) {
+    // Whitelist de valores válidos para o campo perfil.
+    if (!in_array($perfil, ['admin', 'atendente', 'aluno'], true)) {
       http_response_code(400);
-      echo json_encode(['erro' => 'Perfil inválido.']);
+      echo json_encode(['erro' => 'Perfil inválido. Use: admin, atendente ou aluno.']);
       return;
     }
 
-    if (!in_array($status, ['ativo','inativo'],true)) {
+    // Whitelist de valores válidos para o campo status.
+    if (!in_array($status, ['ativo', 'inativo'], true)) {
       http_response_code(400);
-      echo json_encode(['erro' => 'Status inválido.']);
+      echo json_encode(['erro' => 'Status inválido. Use: ativo ou inativo.']);
       return;
     }
 
     try {
+      // A senha não é alterada aqui — uma operação separada seria necessária para isso.
       $sql = 'UPDATE usuarios SET nome = :nome, email = :email, perfil = :perfil, status = :status WHERE id = :id';
-
       $stmt = $this->pdo->prepare($sql);
       $stmt->bindValue(':nome', $nome);
       $stmt->bindValue(':email', $email);
@@ -178,7 +181,7 @@ class UsuariosController
   {
     header('Content-Type: application/json; charset=utf-8');
 
-    // Exclusão por ID recebido no corpo da requisição.
+    // ID vem no corpo do POST para operação de exclusão.
     $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
     if (!$id) {
@@ -189,7 +192,6 @@ class UsuariosController
 
     try {
       $sql = 'DELETE FROM usuarios WHERE id = :id';
-
       $stmt = $this->pdo->prepare($sql);
       $stmt->bindValue(':id', $id, PDO::PARAM_INT);
       $stmt->execute();

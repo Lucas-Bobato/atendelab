@@ -7,6 +7,7 @@ require_once __DIR__ . '/app/controllers/UsuariosController.php';
 require_once __DIR__ . '/app/controllers/PessoasController.php';
 require_once __DIR__ . '/app/controllers/TiposAtendimentosController.php';
 require_once __DIR__ . '/app/controllers/AtendimentosController.php';
+require_once __DIR__ . '/app/controllers/RelatoriosController.php';
 require_once __DIR__ . '/app/middleware/auth.php';
 
 $controller = $_GET['controller'] ?? 'auth';
@@ -117,9 +118,11 @@ switch ($controller) {
       case 'atualizar':
         $pessoasController->atualizar();
         break;
-      case 'excluir':
       case 'inativar':
-        $pessoasController->excluir();
+        $pessoasController->inativar();
+        break;
+      case 'ativar':
+        $pessoasController->ativar();
         break;
       default:
         http_response_code(404);
@@ -146,9 +149,11 @@ switch ($controller) {
       case 'atualizar':
         $tiposAtendimentosController->atualizar();
         break;
-      case 'excluir':
       case 'inativar':
-        $tiposAtendimentosController->excluir();
+        $tiposAtendimentosController->inativar();
+        break;
+      case 'ativar':
+        $tiposAtendimentosController->ativar();
         break;
       default:
         http_response_code(404);
@@ -180,6 +185,20 @@ switch ($controller) {
       default:
         http_response_code(404);
         echo 'Ação de atendimentos não encontrada.';
+    }
+    break;
+
+  case 'relatorios':
+    exigirAutenticacao();
+    $relatoriosController = new RelatoriosController();
+
+    switch ($action) {
+      case 'atendimentos':
+        $relatoriosController->atendimentos();
+        break;
+      default:
+        http_response_code(404);
+        echo 'Ação de relatórios não encontrada.';
     }
     break;
 
