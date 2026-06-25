@@ -38,6 +38,9 @@ $perfilUsuario = htmlspecialchars((string) ($usuarioLogado['perfil'] ?? ''), ENT
                 <li class="nav-item">
                     <a class="nav-link" href="<?= $baseUrl ?>?controller=frontend&action=atendimentos">Atendimentos</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= $baseUrl ?>?controller=relatorios&action=atendimentos">Relatórios</a>
+                </li>
             </ul>
             <div class="d-flex align-items-center gap-3 text-white small">
                 <span><?= $nomeUsuario ?><?= $perfilUsuario !== '' ? ' · ' . $perfilUsuario : '' ?></span>

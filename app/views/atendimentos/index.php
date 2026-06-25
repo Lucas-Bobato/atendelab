@@ -177,7 +177,7 @@ async function carregarAtendimentos() {
                     <td class="text-end">
                         <button class="btn btn-sm btn-outline-primary"
                             onclick="abrirStatus(${Number(a.id)}, '${AtendeLabApi.escapeAttr(status)}')">
-                            Status
+                            Editar status
                         </button>
                     </td>
                 </tr>

@@ -44,22 +44,26 @@ require __DIR__ . '/../layouts/header.php';
             <a class="btn btn-success" href="<?= $baseUrl ?>?controller=frontend&action=pessoas">Gerenciar pessoas</a>
             <a class="btn btn-outline-success" href="<?= $baseUrl ?>?controller=frontend&action=tipos">Gerenciar tipos</a>
             <a class="btn btn-outline-success" href="<?= $baseUrl ?>?controller=frontend&action=atendimentos">Registrar atendimentos</a>
+            <a class="btn btn-outline-secondary" href="<?= $baseUrl ?>?controller=relatorios&action=atendimentos">Relatório</a>
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-    const targets = {
-        pessoas: document.getElementById('totalPessoas'),
-        tipos: document.getElementById('totalTipos'),
-        atendimentos: document.getElementById('totalAtendimentos')
-    };
-    for (const [controller, element] of Object.entries(targets)) {
-        try {
-            const response = await AtendeLabApi.get(controller, 'listar');
-            element.textContent = AtendeLabApi.toList(response).length;
-        } catch (error) {
+    try {
+        const response = await AtendeLabApi.get('dashboard', 'resumo');
+        const indicadores = response.indicadores || {};
+
+        document.getElementById('totalPessoas').textContent =
+            indicadores.total_pessoas ?? 0;
+        document.getElementById('totalTipos').textContent =
+            indicadores.total_tipos ?? 0;
+        document.getElementById('totalAtendimentos').textContent =
+            indicadores.total_atendimentos ?? 0;
+    } catch (error) {
+        for (const id of ['totalPessoas', 'totalTipos', 'totalAtendimentos']) {
+            const element = document.getElementById(id);
             element.textContent = '!';
             element.title = error.message;
         }
